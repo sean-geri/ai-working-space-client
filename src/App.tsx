@@ -8,6 +8,7 @@ function App() {
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [presentationHtml, setPresentationHtml] = useState<string | null>(null);
+  const [showPresentation, setShowPresentation] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleSubmit = async () => {
@@ -44,6 +45,7 @@ function App() {
       // Extract HTML from the response
       if (data.output && data.output.length > 0 && data.output[0].output) {
         setPresentationHtml(data.output[0].output);
+        setShowPresentation(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -68,7 +70,7 @@ function App() {
 
   // Load HTML content into iframe
   useEffect(() => {
-    if (presentationHtml && iframeRef.current) {
+    if (presentationHtml && showPresentation && iframeRef.current) {
       const iframe = iframeRef.current;
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (doc) {
@@ -77,11 +79,98 @@ function App() {
         doc.close();
       }
     }
-  }, [presentationHtml]);
+  }, [presentationHtml, showPresentation]);
 
   return (
     <div className="App">
-      {presentationHtml ? (
+      {/* Loading Dialog */}
+      {isLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center',
+            maxWidth: '400px',
+            width: '90%',
+            animation: 'fadeInScale 0.3s ease-out'
+          }}>
+            {/* Animated hourglass */}
+            <div style={{
+              fontSize: '64px',
+              marginBottom: '20px',
+              animation: 'bounce 2s infinite'
+            }}>
+              ⏳
+            </div>
+            
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#1f2937',
+              margin: '0 0 12px 0',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              Creating Your Presentation
+            </h2>
+            
+            <p style={{
+              fontSize: '18px',
+              color: '#667eea',
+              fontWeight: '600',
+              margin: '0 0 24px 0',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              Good things take time ✨
+            </p>
+            
+            <p style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              margin: 0,
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              Our AI is crafting something amazing for you...
+            </p>
+            
+            {/* Progress dots */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '8px',
+              marginTop: '24px'
+            }}>
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: '#667eea',
+                    borderRadius: '50%',
+                    animation: `pulse 1.5s infinite ${i * 0.2}s`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {presentationHtml && showPresentation ? (
         // Full-screen presentation view
         <div style={{
           position: 'fixed',
@@ -130,7 +219,7 @@ function App() {
               📥 Download
             </button>
             <button
-              onClick={() => setPresentationHtml(null)}
+              onClick={() => setShowPresentation(false)}
               style={{
                 padding: '12px 18px',
                 fontSize: '14px',
@@ -337,21 +426,7 @@ function App() {
                   }
                 }}
               >
-                {isLoading ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <span style={{
-                      width: '20px',
-                      height: '20px',
-                      border: '2px solid transparent',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }}></span>
-                    Generating your presentation...
-                  </span>
-                ) : (
-                  '🚀 Generate Presentation'
-                )}
+                {isLoading ? 'Processing...' : '🚀 Generate Presentation'}
               </button>
 
               {error && (
@@ -364,6 +439,48 @@ function App() {
                   color: '#dc2626'
                 }}>
                   <strong>Error:</strong> {error}
+                </div>
+              )}
+
+              {presentationHtml && !showPresentation && (
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  color: '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}>
+                  <div>
+                    <strong>Presentation Ready!</strong> Your presentation is generated and ready to view.
+                  </div>
+                  <button
+                    onClick={() => setShowPresentation(true)}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      backgroundColor: '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = '#5a67d8';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = '#667eea';
+                    }}
+                  >
+                    📊 View Presentation
+                  </button>
                 </div>
               )}
 
