@@ -22,7 +22,7 @@ function App() {
     setResponse(null);
 
     try {
-      const response = await fetch('http://localhost:3007/chat/prompt', {
+      const response = await fetch('http://51.17.251.13:3000/chat-presentation/prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ function App() {
 
       const data = await response.json();
       setResponse(data);
-      
+
       // Extract HTML from the response
       if (data.output && data.output.length > 0 && data.output[0].output) {
         setPresentationHtml(data.output[0].output);
@@ -56,7 +56,7 @@ function App() {
 
   const downloadPresentation = () => {
     if (!presentationHtml) return;
-    
+
     const blob = new Blob([presentationHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -116,7 +116,7 @@ function App() {
             }}>
               ⏳
             </div>
-            
+
             <h2 style={{
               fontSize: '24px',
               fontWeight: '700',
@@ -126,7 +126,7 @@ function App() {
             }}>
               Creating Your Presentation
             </h2>
-            
+
             <p style={{
               fontSize: '18px',
               color: '#667eea',
@@ -136,7 +136,7 @@ function App() {
             }}>
               Good things take time ✨
             </p>
-            
+
             <p style={{
               fontSize: '14px',
               color: '#6b7280',
@@ -145,7 +145,7 @@ function App() {
             }}>
               Our AI is crafting something amazing for you...
             </p>
-            
+
             {/* Progress dots */}
             <div style={{
               display: 'flex',
@@ -169,7 +169,7 @@ function App() {
           </div>
         </div>
       )}
-      
+
       {presentationHtml && showPresentation ? (
         // Full-screen presentation view
         <div style={{
