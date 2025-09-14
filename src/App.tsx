@@ -39,7 +39,8 @@ function App() {
           prompt: prompt,
           slideNumber: slideNumber,
           sessionId: "asdasd"
-        })
+        }),
+        signal: AbortSignal.timeout(120000) // 2 minutes timeout
       });
 
       if (!response.ok) {
@@ -93,7 +94,9 @@ function App() {
         body: JSON.stringify({
           prompt: userMessage,
           sessionId: "asdasdasd"
-        })
+        }),
+        signal: AbortSignal.timeout(120000) // 2 minutes timeout
+
       });
 
       if (!response.ok) {
