@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import logo from './logo-main.png';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [chatPrompt, setChatPrompt] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleSubmit = async () => {
@@ -25,8 +27,9 @@ function App() {
     setError(null);
     setResponse(null);
 
+
     try {
-      const response = await fetch('http://51.17.251.13:3000/chat-presentation/prompt', {
+      const response = await fetch('https://ai-api.diro-tech.com/chat/prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +84,7 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3010/ai-chat', {
+      const response = await fetch('https://ai-api.diro-tech.com/ai-chat/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,16 +101,16 @@ function App() {
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.data && data.data.output) {
         setChatMessages(prev => [...prev, { role: 'assistant', content: data.data.output }]);
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      setChatMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please try again.' 
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.'
       }]);
     } finally {
       setIsChatLoading(false);
@@ -383,17 +386,21 @@ function App() {
                     textAlign: 'center',
                     marginBottom: '32px'
                   }}>
-                    <div style={{
-                      fontSize: '48px',
-                      marginBottom: '12px'
-                    }}>🎯</div>
+                    <img
+                      src={logo}
+                      alt="Diro-ai Logo"
+                      style={{
+                        height: '64px',
+                        marginBottom: '16px'
+                      }}
+                    />
                     <h1 style={{
                       fontSize: '28px',
                       fontWeight: '700',
                       color: '#1f2937',
                       margin: '0 0 8px 0'
                     }}>
-                      AI Presentation Generator
+                      Diro-ai Presentation Generator
                     </h1>
                     <p style={{
                       fontSize: '16px',
@@ -606,17 +613,21 @@ function App() {
                     textAlign: 'center',
                     marginBottom: '32px'
                   }}>
-                    <div style={{
-                      fontSize: '48px',
-                      marginBottom: '12px'
-                    }}>💬</div>
+                    <img
+                      src={logo}
+                      alt="Diro-ai Logo"
+                      style={{
+                        height: '64px',
+                        marginBottom: '16px'
+                      }}
+                    />
                     <h1 style={{
                       fontSize: '28px',
                       fontWeight: '700',
                       color: '#1f2937',
                       margin: '0 0 8px 0'
                     }}>
-                      AI Chat Assistant
+                      Diro-ai Chat Assistant
                     </h1>
                     <p style={{
                       fontSize: '16px',
@@ -672,7 +683,7 @@ function App() {
                         </div>
                       ))
                     )}
-                    
+
                     {isChatLoading && (
                       <div style={{
                         marginBottom: '16px',
