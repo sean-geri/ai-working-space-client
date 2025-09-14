@@ -9,6 +9,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [presentationHtml, setPresentationHtml] = useState<string | null>(null);
   const [showPresentation, setShowPresentation] = useState(false);
+  const [activeTab, setActiveTab] = useState<'presentation' | 'chat'>('presentation');
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [chatPrompt, setChatPrompt] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleSubmit = async () => {
@@ -66,6 +70,55 @@ function App() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleChatSubmit = async () => {
+    if (!chatPrompt.trim()) return;
+
+    const userMessage = chatPrompt.trim();
+    setChatPrompt('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsChatLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:3010/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxODQiLCJpYXQiOjE3NDQ1NDAwOTIsImV4cCI6MTc0NDYyNjQ5Mn0._z3l95hthqK3qdbg9OG2KudQjHrrX52vfGzOgShO-p4'
+        },
+        body: JSON.stringify({
+          prompt: userMessage,
+          sessionId: "asdasdasd"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.output) {
+        setChatMessages(prev => [...prev, { role: 'assistant', content: data.data.output }]);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error. Please try again.' 
+      }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleChatKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit();
+    }
   };
 
   // Load HTML content into iframe
@@ -273,44 +326,90 @@ function App() {
           <div style={{
             backgroundColor: 'white',
             borderRadius: '20px',
-            padding: '40px',
+            padding: '0',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-            maxWidth: '500px',
+            maxWidth: activeTab === 'chat' ? '800px' : '500px',
             width: '100%',
-            backdropFilter: 'blur(10px)'
+            backdropFilter: 'blur(10px)',
+            overflow: 'hidden'
           }}>
-            {/* Header */}
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '32px'
-            }}>
-              <div style={{
-                fontSize: '48px',
-                marginBottom: '12px'
-              }}>🎯</div>
-              <h1 style={{
-                fontSize: '28px',
-                fontWeight: '700',
-                color: '#1f2937',
-                margin: '0 0 8px 0'
-              }}>
-                AI Presentation Generator
-              </h1>
-              <p style={{
-                fontSize: '16px',
-                color: '#6b7280',
-                margin: 0
-              }}>
-                Create stunning presentations powered by AI
-              </p>
-            </div>
-
-            {/* Form */}
+            {/* Tab Navigation */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '24px'
+              borderBottom: '1px solid #e5e7eb'
             }}>
+              <button
+                onClick={() => setActiveTab('presentation')}
+                style={{
+                  flex: 1,
+                  padding: '16px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  backgroundColor: activeTab === 'presentation' ? '#667eea' : 'transparent',
+                  color: activeTab === 'presentation' ? 'white' : '#6b7280',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  borderTopLeftRadius: '20px'
+                }}
+              >
+                🎯 Presentation Generator
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                style={{
+                  flex: 1,
+                  padding: '16px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  backgroundColor: activeTab === 'chat' ? '#667eea' : 'transparent',
+                  color: activeTab === 'chat' ? 'white' : '#6b7280',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  borderTopRightRadius: '20px'
+                }}
+              >
+                💬 AI Chat
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div style={{ padding: '40px' }}>
+              {activeTab === 'presentation' ? (
+                <>
+                  {/* Header */}
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: '32px'
+                  }}>
+                    <div style={{
+                      fontSize: '48px',
+                      marginBottom: '12px'
+                    }}>🎯</div>
+                    <h1 style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      color: '#1f2937',
+                      margin: '0 0 8px 0'
+                    }}>
+                      AI Presentation Generator
+                    </h1>
+                    <p style={{
+                      fontSize: '16px',
+                      color: '#6b7280',
+                      margin: 0
+                    }}>
+                      Create stunning presentations powered by AI
+                    </p>
+                  </div>
+
+                  {/* Form */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '24px'
+                  }}>
               <div>
                 <label htmlFor="prompt" style={{
                   display: 'block',
@@ -495,8 +594,185 @@ function App() {
                   maxHeight: '150px',
                   overflow: 'auto'
                 }}>
-                  <strong>Success!</strong> Presentation generated successfully.
-                </div>
+                <strong>Success!</strong> Presentation generated successfully.
+              </div>
+            )}
+                  </div>
+                </>
+              ) : (
+                // Chat Interface
+                <>
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: '32px'
+                  }}>
+                    <div style={{
+                      fontSize: '48px',
+                      marginBottom: '12px'
+                    }}>💬</div>
+                    <h1 style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      color: '#1f2937',
+                      margin: '0 0 8px 0'
+                    }}>
+                      AI Chat Assistant
+                    </h1>
+                    <p style={{
+                      fontSize: '16px',
+                      color: '#6b7280',
+                      margin: 0
+                    }}>
+                      Chat with our AI assistant - Ask anything!
+                    </p>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div style={{
+                    height: '400px',
+                    overflowY: 'auto',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '16px',
+                    backgroundColor: '#f9fafb'
+                  }}>
+                    {chatMessages.length === 0 ? (
+                      <div style={{
+                        textAlign: 'center',
+                        color: '#6b7280',
+                        padding: '40px 20px',
+                        fontSize: '16px'
+                      }}>
+                        👋 Start a conversation! Ask me anything.
+                      </div>
+                    ) : (
+                      chatMessages.map((message, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            marginBottom: '16px',
+                            display: 'flex',
+                            justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                          }}
+                        >
+                          <div style={{
+                            maxWidth: '80%',
+                            padding: '12px 16px',
+                            borderRadius: '16px',
+                            backgroundColor: message.role === 'user' ? '#667eea' : 'white',
+                            color: message.role === 'user' ? 'white' : '#1f2937',
+                            border: message.role === 'assistant' ? '1px solid #e5e7eb' : 'none',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                            fontSize: '15px',
+                            lineHeight: '1.5'
+                          }}>
+                            {message.content}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    
+                    {isChatLoading && (
+                      <div style={{
+                        marginBottom: '16px',
+                        display: 'flex',
+                        justifyContent: 'flex-start'
+                      }}>
+                        <div style={{
+                          maxWidth: '80%',
+                          padding: '12px 16px',
+                          borderRadius: '16px',
+                          backgroundColor: 'white',
+                          color: '#1f2937',
+                          border: '1px solid #e5e7eb',
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                          fontSize: '15px',
+                          lineHeight: '1.5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <div style={{
+                            width: '16px',
+                            height: '16px',
+                            border: '2px solid #e5e7eb',
+                            borderTop: '2px solid #667eea',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }}></div>
+                          AI is thinking...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chat Input */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'flex-end'
+                  }}>
+                    <textarea
+                      value={chatPrompt}
+                      onChange={(e) => setChatPrompt(e.target.value)}
+                      onKeyPress={handleChatKeyPress}
+                      placeholder="Type your message here... (Press Enter to send)"
+                      style={{
+                        flex: 1,
+                        minHeight: '50px',
+                        maxHeight: '120px',
+                        padding: '12px 16px',
+                        fontSize: '16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '12px',
+                        backgroundColor: '#f9fafb',
+                        color: '#1f2937',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#667eea';
+                        e.target.style.backgroundColor = 'white';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#e5e7eb';
+                        e.target.style.backgroundColor = '#f9fafb';
+                      }}
+                    />
+                    <button
+                      onClick={handleChatSubmit}
+                      disabled={isChatLoading || !chatPrompt.trim()}
+                      style={{
+                        padding: '14px 20px',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        backgroundColor: isChatLoading || !chatPrompt.trim() ? '#9ca3af' : '#667eea',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
+                        cursor: isChatLoading || !chatPrompt.trim() ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isChatLoading || !chatPrompt.trim() ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isChatLoading && chatPrompt.trim()) {
+                          e.currentTarget.style.backgroundColor = '#5a67d8';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isChatLoading && chatPrompt.trim()) {
+                          e.currentTarget.style.backgroundColor = '#667eea';
+                        }
+                      }}
+                    >
+                      {isChatLoading ? 'Sending...' : '📤 Send'}
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
