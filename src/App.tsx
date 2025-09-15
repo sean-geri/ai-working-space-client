@@ -29,7 +29,7 @@ function App() {
 
 
     try {
-      const response = await fetch('http://localhost:3000/chat/prompt', {
+      const response = await fetch('https://ai-api.diro-tech.com/chat/prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/ai-chat/', {
+      const response = await fetch('https://ai-api.diro-tech.com/ai-chat/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
